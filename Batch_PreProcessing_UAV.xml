@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<batchjobs version="1.5.1">
+  <job name="AlignPhotos" target="all">
+    <downscale>2</downscale>
+    <mask_tiepoints>0</mask_tiepoints>
+    <network_distribute>1</network_distribute>
+  </job>
+  <job name="BuildDenseCloud" target="all">
+    <filter_mode>2</filter_mode>
+    <network_distribute>1</network_distribute>
+  </job>
+  <job name="BuildModel" target="all">
+    <downscale>16</downscale>
+    <face_count>2</face_count>
+    <filter_mode>2</filter_mode>
+    <network_distribute>1</network_distribute>
+    <source_data>0</source_data>
+    <store_depth>1</store_depth>
+    <surface_type>1</surface_type>
+  </job>
+  <job name="BuildTexture" target="all">
+    <mapping_mode>3</mapping_mode>
+  </job>
+  <job name="BuildOrthomosaic" target="all">
+    <network_distribute>1</network_distribute>
+  </job>
+  <job name="ExportOrthomosaic" target="all">
+    <image_format>2</image_format>
+    <path>C:/Users/ASUS/OneDrive/Desktop/Survei Sumatera Utara 20-28 Juni 2022/Drone/DCIM/101MEDIA/RGB/RGB.tif</path>
+    <tile_height>10000</tile_height>
+    <tile_width>10000</tile_width>
+    <white_background>0</white_background>
+    <write_alpha>0</write_alpha>
+  </job>
+</batchjobs>
