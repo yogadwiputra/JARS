@@ -1,0 +1,58 @@
+
+var area=D4P2_Tea;
+var nama_area = 'D4P2_Tea';
+
+var Ren_BndS2 = ['blue','green', 'red','rdE1','rdE2','rdE3','rdE4', 'nir','swir1','swir2'],
+BndS2a = ['B2','B3', 'B4','B5','B6', 'B7','B8A','B8', 'B11','B12'];
+
+
+// FILTERING ==================================================
+var Citra = Sentinel2_2A.filterBounds(area)
+  .filterDate('2023-08-01','2023-08-08')
+  .filter(ee.Filter.lte('CLOUDY_PIXEL_PERCENTAGE',20));
+
+  
+print('List Citra', Citra);
+
+var Citra = Citra.map(CMask_S2k)
+  .map(AddBands_Idx)
+  .qualityMosaic('NDVI');
+
+// PLOTTING ==================================================
+Map.centerObject(area,15);
+Map.addLayer(Citra.clip(area), imageVisParam2);
+
+var Citra_download = Citra.select(['blue', 'green', 'red', 'NDVI']);
+
+// EXPORTING ==================================================
+Export.image.toDrive({
+  image: Citra_download, // Citra.select(Ren_BndS2), // Citra adalah variabel yang sudah di masking dan mosaic
+  folder: "Download_Sentinel_2_2A_PAPER_PakAW_SIGPJ", // nama folder di drive
+  description: nama_area, // deskripsi
+  region: area, // area yang mau dieksport
+  scale: 10, // skala per pixel dalam meter
+  maxPixels: 1e10,
+});
+
+print('Citra', Citra_download);
+
+
+// LIST of FUNCTIONS ==================================================
+function CMask_S2k(image) { // Utk S2_SR mengggunakan band SCL
+  var qa = image.select('SCL');
+  var mask = qa.expression('(qa == 3 || qa > 7) ? 0:1',{qa:qa});
+  return image.updateMask(mask).divide(10000).select(BndS2a,Ren_BndS2)
+  .copyProperties(image, ["system:time_start","system:time_end"]);
+}
+function AddBands_Idx(image){ // Index EVI,NDWI,NDBI 
+  var ndvi = image.normalizedDifference(['nir', 'red']).rename('NDVI');
+  var ndwi = image.normalizedDifference(['green', 'swir2']).rename('NDWI');
+  var mndwi = image.normalizedDifference(['green', 'swir1']).rename('MNDWI');
+  var ndbi = image.normalizedDifference(['swir1', 'nir']).rename('NDBI');
+  var evi = image.expression("(RED < NIR || BLUE < RED) ? L*2.5*((NIR-RED)/(L+NIR+6*RED-7.5*BLUE))"+
+  ":L*1.5*((NIR-RED)/(L/2+NIR+RED))"
+    ,{NIR: image.select('nir'),RED: image.select('red'),BLUE: image.select('blue'),L: 1}).rename('EVI');
+  var Msk = ndvi.expression('(vi <= -1.0 || vi >= 1.0 || iv <= -1.0 || iv >= 1.0) ? 0:1',{vi:ndvi,iv:evi});
+ // var bui = ndbi.subtract(evi).rename('BUI');
+  return image.addBands(ndbi).addBands(evi).addBands(ndvi).addBands(ndwi).addBands(mndwi).updateMask(Msk).toFloat(); 
+ }
